@@ -34,7 +34,19 @@ function updateActiveNavLink() {
             link.classList.add('active');
         }
     });
+
+    // Replace the URL hash to match the currently visible section (no new history entry)
+    if (current) {
+        const newHash = `#${current}`;
+        try {
+            history.replaceState(null, '', newHash);
+        } catch (err) {
+            // Fallback
+            // location.hash = newHash; // optional fallback if you want this behavior
+        }
+    }
 }
+
 
 // Navbar scroll effect
 function handleNavbarScroll() {
@@ -130,8 +142,12 @@ if (contactForm) {
 // Smooth scroll for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
+        // only handle in-page anchors
+        const href = this.getAttribute('href');
+        if (!href || href === '#' || href.indexOf('mailto:') === 0) return;
+
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
+        const target = document.querySelector(href);
         if (target) {
             const headerOffset = 80;
             const elementPosition = target.getBoundingClientRect().top;
@@ -141,9 +157,18 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 top: offsetPosition,
                 behavior: 'smooth'
             });
+
+            // Update address bar without causing a jump — add a history entry so Back works
+            try {
+                history.pushState(null, '', href);
+            } catch (err) {
+                // Fallback (very old browsers) — this may cause a jump in some browsers
+                location.hash = href;
+            }
         }
     });
 });
+
 
 // Initialize animations when page loads
 document.addEventListener('DOMContentLoaded', () => {
